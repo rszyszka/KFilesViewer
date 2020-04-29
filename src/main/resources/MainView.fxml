@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml" xmlns="http://javafx.com/javafx" fx:id="anchorPane"
+            fx:controller="pl.edu.agh.metal.spw.kfilesviewer.MainController">
+    <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+          AnchorPane.topAnchor="0.0">
+        <MenuBar>
+            <Menu mnemonicParsing="false" text="File">
+                <MenuItem mnemonicParsing="false" onAction="#loadFile" text="Load File"/>
+                <MenuItem mnemonicParsing="false" onAction="#clearView" text="Clear"/>
+                <MenuItem mnemonicParsing="false" onAction="#closeApp" text="Exit"/>
+            </Menu>
+        </MenuBar>
+        <BorderPane fx:id="borderPane" style="-fx-border-color: BLACK;"/>
+    </VBox>
+</AnchorPane>

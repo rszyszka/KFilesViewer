@@ -13,6 +13,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.MeshView;
 import javafx.stage.FileChooser;
 
 import java.io.File;
@@ -27,7 +28,7 @@ public class MainController implements Initializable {
     public AnchorPane anchorPane;
     @FXML
     public BorderPane borderPane;
-    private Group group;
+    private Group rootGroup;
 
 
     public void loadFile() {
@@ -39,35 +40,56 @@ public class MainController implements Initializable {
             visualize(data);
         } catch (CustomException ex) {
             raiseErrorAlert(ex.getMessage());
-        } catch (Exception ignored) {
         }
     }
 
 
     private void visualize(Data data) {
-        data.getSolidElementDefList().forEach(solidElementDef -> {
-            int[] indices = solidElementDef.getNodesCoordinatesIndices();
-            float[] points = new float[24];
-
-            int i = 0;
-            for (int index : indices) {
-                Point3D coords = data.getNodesCoordinates().get(index);
-                points[i++] = (float) coords.getX();
-                points[i++] = (float) coords.getY();
-                points[i++] = (float) coords.getZ();
+        data.getElementDefList().forEach(elementDef -> {
+            if (elementDef.getType() == ElementDef.Type.SOLID) {
+                handleSolidElementData(data, elementDef);
+            } else {
+                handleShellElementData(data, elementDef);
             }
-
-            addHexahedronToGroup(points);
         });
     }
 
+    private void handleShellElementData(Data data, ElementDef elementDef) {
+        int[] indices = elementDef.getNodesCoordinatesIndices();
+        float[] points = new float[12];
 
-    private void addHexahedronToGroup(float[] points) {
-        Hexahedron hexahedron = new Hexahedron(points);
+        int i = 0;
+        for (int index : indices) {
+            Point3D coords = data.getNodesCoordinates().get(index - 1);
+            points[i++] = (float) coords.getX();
+            points[i++] = (float) coords.getY();
+            points[i++] = (float) coords.getZ();
+        }
+
+        addElementToGroup(new Shell(points));
+    }
+
+    private void handleSolidElementData(Data data, ElementDef elementDef) {
+        int[] indices = elementDef.getNodesCoordinatesIndices();
+        float[] points = new float[24];
+
+        int i = 0;
+        for (int index : indices) {
+            Point3D coords = data.getNodesCoordinates().get(index - 1);
+            points[i++] = (float) coords.getX();
+            points[i++] = (float) coords.getY();
+            points[i++] = (float) coords.getZ();
+        }
+
+        addElementToGroup(new Hexahedron(points));
+    }
+
+
+    private void addElementToGroup(MeshView element) {
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.ROYALBLUE);
-        hexahedron.setMaterial(material);
-        group.getChildren().add(hexahedron);
+        element.setMaterial(material);
+        rootGroup.getChildren().add(element);
     }
 
 
@@ -81,20 +103,20 @@ public class MainController implements Initializable {
 
 
     public void clearView() {
-        group.getChildren().clear();
+        rootGroup.getChildren().clear();
     }
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        group = new Group();
-        SubScene scene = new SubScene(group, WIDTH, HEIGHT, true, SceneAntialiasing.BALANCED);
+        rootGroup = new Group();
+        SubScene scene = new SubScene(rootGroup, WIDTH, HEIGHT, true, SceneAntialiasing.BALANCED);
         scene.setFill(Color.SILVER);
         scene.setCamera(new PerspectiveCamera());
-        GroupMouseControl.init(anchorPane, group);
-        group.translateXProperty().set(WIDTH >> 1);
-        group.translateYProperty().set(HEIGHT >> 1);
-        group.translateZProperty().set(-600);
+        GroupMouseControl.init(anchorPane, rootGroup);
+        rootGroup.translateXProperty().set(WIDTH >> 1);
+        rootGroup.translateYProperty().set(HEIGHT >> 1);
+        rootGroup.translateZProperty().set(-600);
         borderPane.setCenter(scene);
     }
 

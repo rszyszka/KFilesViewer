@@ -9,13 +9,13 @@ import java.util.List;
 
 public class Data {
     private List<Point3D> nodesCoordinates;
-    private List<SolidElementDef> solidElementDefList;
+    private List<ElementDef> elementDefList;
     private BufferedReader bufferedReader;
 
 
     public Data(File file) throws CustomException {
         nodesCoordinates = new ArrayList<>();
-        solidElementDefList = new ArrayList<>();
+        elementDefList = new ArrayList<>();
         loadDataFromFile(file);
     }
 
@@ -24,8 +24,12 @@ public class Data {
         try {
             bufferedReader = new BufferedReader(new FileReader(file));
             validateFirstLine();
-            readNodesCoordinates();
-            readSolidElementsDefinitions();
+            String currentLine = readNodesCoordinates();
+            if (currentLine.equals("*ELEMENT_SOLID")) {
+                readSolidElementsDefinitions();
+            } else if (currentLine.equals("*ELEMENT_SHELL")) {
+                readShellElementsDefinitions();
+            }
             bufferedReader.close();
         } catch (FileNotFoundException ignored) {
             throw new CustomException("File '" + file.getName() + "' does not exist.");
@@ -45,9 +49,9 @@ public class Data {
     }
 
 
-    private void readNodesCoordinates() throws IOException {
+    private String readNodesCoordinates() throws IOException {
         String currentLine;
-        while (!(currentLine = bufferedReader.readLine()).equals("*ELEMENT_SOLID")) {
+        while (!(currentLine = bufferedReader.readLine()).contains("*ELEMENT")) {
             String[] numbers = currentLine.split(", ");
             nodesCoordinates.add(new Point3D(
                     Double.parseDouble(numbers[1]),
@@ -55,6 +59,7 @@ public class Data {
                     Double.parseDouble(numbers[3])
             ));
         }
+        return currentLine;
     }
 
 
@@ -62,7 +67,7 @@ public class Data {
         String currentLine;
         while (!(currentLine = bufferedReader.readLine()).equals("*END")) {
             String[] numbers = currentLine.split(", ");
-            solidElementDefList.add(new SolidElementDef(new int[]{
+            elementDefList.add(new ElementDef(new int[]{
                     Integer.parseInt(numbers[2]),
                     Integer.parseInt(numbers[3]),
                     Integer.parseInt(numbers[4]),
@@ -71,7 +76,21 @@ public class Data {
                     Integer.parseInt(numbers[7]),
                     Integer.parseInt(numbers[8]),
                     Integer.parseInt(numbers[9])
-            }));
+            }, ElementDef.Type.SOLID));
+        }
+    }
+
+
+    private void readShellElementsDefinitions() throws IOException {
+        String currentLine;
+        while (!(currentLine = bufferedReader.readLine()).equals("*END")) {
+            String[] numbers = currentLine.split(", ");
+            elementDefList.add(new ElementDef(new int[]{
+                    Integer.parseInt(numbers[2]),
+                    Integer.parseInt(numbers[3]),
+                    Integer.parseInt(numbers[4]),
+                    Integer.parseInt(numbers[5]),
+            }, ElementDef.Type.SHELL));
         }
     }
 
@@ -81,8 +100,8 @@ public class Data {
     }
 
 
-    public List<SolidElementDef> getSolidElementDefList() {
-        return solidElementDefList;
+    public List<ElementDef> getElementDefList() {
+        return elementDefList;
     }
 
 }
